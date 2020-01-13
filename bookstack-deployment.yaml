@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bookstack
+  labels:
+    app: bookstack
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: bookstack
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: bookstack
+    spec:
+      containers:
+      - image: solidnerd/bookstack:0.27.5
+        name: bookstack
+        env:
+        - name: DB_DATABASE
+          value: bookstack
+        - name: DB_HOST
+          value: mysql:3306
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        - name: DB_USERNAME
+          value: root
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /var/www/bookstack/public/uploads
+          name: uploads
+        - mountPath: /var/www/bookstack/storage/uploads
+          name: storage-uploads
+      restartPolicy: Always
+      volumes:
+      - name: uploads
+        persistentVolumeClaim:
+          claimName: uploads
+      - name: storage-uploads
+        persistentVolumeClaim:
+          claimName: storage-uploads
